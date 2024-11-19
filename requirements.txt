@@ -1,0 +1,7 @@
+datasets
+gdown
+transformers
+tensorflow
+sacrebleu
+streamlit
+sentencepiece
