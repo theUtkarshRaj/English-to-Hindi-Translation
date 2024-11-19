@@ -1,16 +1,36 @@
 import streamlit as st
 from transformers import AutoTokenizer, TFAutoModelForSeq2SeqLM
-import numpy as np
+import gdown
+import os
+import tarfile
 import tensorflow as tf
+
+# Suppress TensorFlow logs
 tf.get_logger().setLevel('ERROR')
 
+# Google Drive file ID and paths
+file_id = '1VGMYPz_-EkAlE7RUBl_F64AOx_zZvLt5'  # Update this with your folder's file ID
+model_path = 'tf_model'
+model_file = os.path.join(model_path, "model.tar.gz")  # Adjust to match your model archive name
 
-# Load model and tokenizer
-model_checkpoint = "Helsinki-NLP/opus-mt-en-hi"  # Replace this if needed
+# Download and extract the model from Google Drive
+if not os.path.exists(model_path):
+    os.makedirs(model_path)
+    model_url = f'https://drive.google.com/uc?export=download&id={file_id}'
+    st.info("Downloading the model...")
+    gdown.download(model_url, model_file, quiet=False)
+    
+    # Extract the tar.gz file
+    with tarfile.open(model_file, "r:gz") as tar:
+        tar.extractall(path=model_path)
+    st.success("Model downloaded and extracted!")
+
+# Load the model and tokenizer
+model_checkpoint = "Helsinki-NLP/opus-mt-en-hi"  # Pre-trained model from Hugging Face
 tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
 
-# Ensure the correct path to your saved model
-model = TFAutoModelForSeq2SeqLM.from_pretrained("tf_model/")  # Path to your model folder
+# Ensure proper path for the extracted model
+model = TFAutoModelForSeq2SeqLM.from_pretrained(model_path)
 
 # Streamlit app title and description
 st.title("English to Hindi Translation")
@@ -23,7 +43,7 @@ input_text = st.text_area("Enter English text")
 if st.button("Translate"):
     if input_text:
         # Tokenize the input text
-        tokenized = tokenizer([input_text], return_tensors='np')
+        tokenized = tokenizer([input_text], return_tensors='tf')
 
         # Generate translation
         out = model.generate(**tokenized, max_length=128)
